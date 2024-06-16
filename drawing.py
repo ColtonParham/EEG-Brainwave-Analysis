@@ -31,7 +31,7 @@ def draw_circle(draw, center_x, center_y, radius, color, transparency):
     top = center_y - radius
     right = center_x + radius
     bottom = center_y + radius
-    draw.ellipse([left, top, right, bottom], outline='black', fill=color + (transparency,))
+    draw.ellipse([left, top, right, bottom], outline=None, fill=color + (transparency,))
 
 # Function to draw a square
 def draw_square(draw, center_x, center_y, size, color, transparency):
@@ -39,11 +39,11 @@ def draw_square(draw, center_x, center_y, size, color, transparency):
     top = center_y - size // 2
     right = center_x + size // 2
     bottom = center_y + size // 2
-    draw.rectangle([left, top, right, bottom], outline='black', fill=color + (transparency,))
+    draw.rectangle([left, top, right, bottom], outline=None, fill=color + (transparency,))
 
 # Function to draw a line
-def draw_line(draw, start_x, start_y, end_x, end_y, color, transparency):
-    draw.line([start_x, start_y, end_x, end_y], fill=color + (transparency,), width=3)
+def draw_line(draw, start_x, start_y, end_x, end_y, color, transparency, width=3):
+    draw.line([start_x, start_y, end_x, end_y], fill=color + (transparency,), width=width)
 
 # Function to draw a triangle
 def draw_triangle(draw, center_x, center_y, size, color, transparency):
@@ -53,7 +53,7 @@ def draw_triangle(draw, center_x, center_y, size, color, transparency):
         (center_x - half_size, center_y + half_size),
         (center_x + half_size, center_y + half_size)
     ]
-    draw.polygon(points, outline='black', fill=color + (transparency,))
+    draw.polygon(points, outline=None, fill=color + (transparency,))
 
 # Function to draw a polygon
 def draw_polygon(draw, center_x, center_y, size, color, transparency, sides=5):
@@ -65,7 +65,7 @@ def draw_polygon(draw, center_x, center_y, size, color, transparency, sides=5):
         )
         for i in range(sides)
     ]
-    draw.polygon(points, outline='black', fill=color + (transparency,))
+    draw.polygon(points, outline=None, fill=color + (transparency,))
 
 # Function to draw a star
 def draw_star(draw, center_x, center_y, size, color, transparency, points=5):
@@ -78,7 +78,30 @@ def draw_star(draw, center_x, center_y, size, color, transparency, points=5):
         x = center_x + radius * math.cos(math.radians(i * angle / 2))
         y = center_y + radius * math.sin(math.radians(i * angle / 2))
         vertices.append((x, y))
-    draw.polygon(vertices, outline='black', fill=color + (transparency,))
+    draw.polygon(vertices, outline=None, fill=color + (transparency,))
+
+# Function to draw a flower
+def draw_flower(draw, center_x, center_y, size, color, transparency):
+    petal_length = size
+    petal_width = size / 2
+    for angle in range(0, 360, 45):  # Draw petals around the center
+        end_x = center_x + petal_length * math.cos(math.radians(angle))
+        end_y = center_y + petal_length * math.sin(math.radians(angle))
+        draw.ellipse(
+            [center_x - petal_width, center_y - petal_length, center_x + petal_width, center_y + petal_length],
+            outline=None,
+            fill=color + (transparency,)
+        )
+    # Draw the center of the flower
+    draw_circle(draw, center_x, center_y, size / 4, color, transparency)
+
+# Function to draw a wave
+def draw_wave(draw, start_x, start_y, length, amplitude, color, transparency, width=3):
+    points = []
+    for x in range(int(length)):
+        y = amplitude * math.sin(2 * math.pi * x / length)
+        points.append((start_x + x, start_y + y))
+    draw.line(points, fill=color + (transparency,), width=width)
 
 # Function to generate a unique file name
 def generate_unique_filename(base_path, base_name, extension):
@@ -101,7 +124,7 @@ if not values:
     print("No valid numeric values found in the file.")
 else:
     # Create a blank image
-    width, height = 500, 500
+    width, height = 600, 600
     image = Image.new('RGBA', (width, height), 'white')
     draw = ImageDraw.Draw(image)
 
@@ -114,7 +137,7 @@ else:
     size_scale = 50  # Scaling factor for size
 
     # Define shapes and colors for different brainwave types
-    shapes = ['circle', 'square', 'triangle', 'line', 'polygon', 'star']
+    shapes = ['circle', 'square', 'triangle', 'line', 'polygon', 'star', 'flower', 'wave']
     colors = {
         'Theta': (0, 0, 255),  # Blue
         'Alpha': (0, 255, 0),  # Green
@@ -165,13 +188,52 @@ else:
                 elif shape_type == 'line':
                     end_x = center_x + offset_x + size_or_radius
                     end_y = center_y + offset_y + size_or_radius
-                    draw_line(draw, center_x + offset_x, center_y + offset_y, end_x, end_y, color, transparency)
+                    draw_line(draw, center_x + offset_x, center_y + offset_y, end_x, end_y, color, transparency, width=random.randint(1, 5))
                 elif shape_type == 'triangle':
                     draw_triangle(draw, center_x + offset_x, center_y + offset_y, size_or_radius, color, transparency)
                 elif shape_type == 'polygon':
                     draw_polygon(draw, center_x + offset_x, center_y + offset_y, size_or_radius, color, transparency, sides=random.randint(3, 6))
                 elif shape_type == 'star':
                     draw_star(draw, center_x + offset_x, center_y + offset_y, size_or_radius, color, transparency, points=random.randint(5, 8))
+                elif shape_type == 'flower':
+                    draw_flower(draw, center_x + offset_x, center_y + offset_y, size_or_radius, color, transparency)
+                elif shape_type == 'wave':
+                    draw_wave(draw, center_x + offset_x, center_y + offset_y, int(size_or_radius * 2), int(size_or_radius // 2), color, transparency, width=random.randint(1, 5))
+
+    # Create a new layer for blending
+    blend_layer = Image.new('RGBA', image.size, (255, 255, 255, 0))
+    blend_draw = ImageDraw.Draw(blend_layer)
+
+    # Add some abstract patterns
+    for _ in range(random.randint(10, 20)):
+        pattern_shape = random.choice(shapes)
+        pattern_color = random.choice(list(colors.values()))
+        pattern_transparency = random.randint(50, 150)
+        pattern_x = random.randint(0, width)
+        pattern_y = random.randint(0, height)
+        pattern_size = random.randint(20, 100)
+
+        if pattern_shape == 'circle':
+            draw_circle(blend_draw, pattern_x, pattern_y, pattern_size, pattern_color, pattern_transparency)
+        elif pattern_shape == 'square':
+            draw_square(blend_draw, pattern_x, pattern_y, pattern_size, pattern_color, pattern_transparency)
+        elif pattern_shape == 'line':
+            end_x = pattern_x + pattern_size
+            end_y = pattern_y + pattern_size
+            draw_line(blend_draw, pattern_x, pattern_y, end_x, end_y, pattern_color, pattern_transparency, width=random.randint(1, 5))
+        elif pattern_shape == 'triangle':
+            draw_triangle(blend_draw, pattern_x, pattern_y, pattern_size, pattern_color, pattern_transparency)
+        elif pattern_shape == 'polygon':
+            draw_polygon(blend_draw, pattern_x, pattern_y, pattern_size, pattern_color, pattern_transparency, sides=random.randint(3, 6))
+        elif pattern_shape == 'star':
+            draw_star(blend_draw, pattern_x, pattern_y, pattern_size, pattern_color, pattern_transparency, points=random.randint(5, 8))
+        elif pattern_shape == 'flower':
+            draw_flower(blend_draw, pattern_x, pattern_y, pattern_size, pattern_color, pattern_transparency)
+        elif pattern_shape == 'wave':
+            draw_wave(blend_draw, pattern_x, pattern_y, int(pattern_size * 2), int(pattern_size // 2), pattern_color, pattern_transparency, width=random.randint(1, 5))
+
+    # Blend the pattern layer with the original image
+    image = Image.alpha_composite(image, blend_layer)
 
     # Enhance the image for better visual effect
     enhancer = ImageEnhance.Contrast(image)
